@@ -20,3 +20,5 @@ uuid = "1.10.0"
 thiserror = "1.0.64"
 sqlx-cli = "0.8.2"
 dotenv = "0.15.0"
+validator = { version = "0.18.1", features = ["derive"] }
+axum-valid = "0.20.0"
