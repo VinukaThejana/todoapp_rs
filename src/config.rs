@@ -1,5 +1,4 @@
-use std::sync::Arc;
-
+use dotenv::dotenv;
 use sqlx::PgPool;
 
 pub struct Config {
@@ -8,6 +7,8 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Config {
+        dotenv().unwrap();
+
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         Config { database_url }
     }
@@ -19,11 +20,11 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(config: Config) -> Arc<Self> {
+    pub async fn new(config: Config) -> Self {
         let db = PgPool::connect(&config.database_url)
             .await
             .expect("Failed to connect to database");
 
-        Arc::new(AppState { db })
+        AppState { db }
     }
 }
