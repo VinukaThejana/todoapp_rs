@@ -9,17 +9,20 @@ use validator::ValidationErrors;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("Database error")]
+    #[error(transparent)]
     Database(#[from] sqlx::Error),
 
-    #[error("Not found")]
+    #[error("not found")]
     NotFound,
 
-    #[error("Bad request")]
+    #[error("bad request")]
     BadRequest,
 
-    #[error("Validation error")]
+    #[error("validation errors")]
     Validation(#[from] ValidationErrors),
+
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 impl AppError {
@@ -60,6 +63,10 @@ impl IntoResponse for AppError {
 
                 (StatusCode::BAD_REQUEST, message)
             }
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                String::from("something went wrong"),
+            ),
         };
 
         let body = Json(json!({
