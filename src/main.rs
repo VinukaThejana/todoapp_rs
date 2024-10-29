@@ -1,4 +1,6 @@
 mod config;
+mod database;
+mod error;
 mod model;
 
 #[tokio::main]
