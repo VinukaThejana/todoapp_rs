@@ -1,5 +1,6 @@
 use dotenvy::dotenv;
 use envy;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use validator::{Validate, ValidationError};
 
@@ -23,6 +24,8 @@ impl Env {
         env
     }
 }
+
+pub static ENV: Lazy<Env> = Lazy::new(Env::new);
 
 fn validate_database_url(database_url: &str) -> Result<(), ValidationError> {
     if database_url.is_empty() {
