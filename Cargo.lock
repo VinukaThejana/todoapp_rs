@@ -2123,6 +2123,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlx-cli",
+ "thiserror",
  "tokio",
  "validator",
 ]
