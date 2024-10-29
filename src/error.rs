@@ -33,12 +33,21 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         let (status, message) = match self {
-            AppError::Database(_) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                String::from("something went wrong"),
-            ),
-            AppError::NotFound => (StatusCode::NOT_FOUND, String::from("not found")),
-            AppError::BadRequest => (StatusCode::BAD_REQUEST, String::from("bad request")),
+            AppError::Database(err) => {
+                log::error!("Database error: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from("something went wrong"),
+                )
+            }
+            AppError::NotFound => {
+                log::error!("Not found");
+                (StatusCode::NOT_FOUND, String::from("not found"))
+            }
+            AppError::BadRequest => {
+                log::error!("Bad request");
+                (StatusCode::BAD_REQUEST, String::from("bad request"))
+            }
             AppError::Validation(validation_errors) => {
                 let message = validation_errors
                     .field_errors()
@@ -56,12 +65,16 @@ impl IntoResponse for AppError {
                     .collect::<Vec<String>>()
                     .join(", ");
 
+                log::error!("Validation error: {}", message);
                 (StatusCode::BAD_REQUEST, message)
             }
-            AppError::Other(_) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                String::from("something went wrong"),
-            ),
+            AppError::Other(err) => {
+                log::error!("Internal server error : {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from("something went wrong"),
+                )
+            }
         };
 
         (

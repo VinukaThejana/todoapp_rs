@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use axum::Router;
 use config::{state::AppState, ENV};
+use log::{error, info};
 use tokio::{net::TcpListener, signal};
 use tower::ServiceBuilder;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
@@ -23,6 +24,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(state.clone());
 
+    info!("Listening on port {}", &ENV.port);
     axum::serve(
         TcpListener::bind(format!("0.0.0.0:{}", &ENV.port))
             .await
@@ -37,15 +39,19 @@ async fn main() -> anyhow::Result<()> {
 
 pub async fn shutdown(state: AppState) {
     let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("Failed to listen for the Ctrl+C signal");
+        signal::ctrl_c().await.unwrap_or_else(|_| {
+            error!("Failed to listen for the Ctrl+C signal");
+            std::process::exit(1);
+        })
     };
 
     #[cfg(unix)]
     let terminate = async {
         signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("Failed to listen for the SIGTERM signal")
+            .unwrap_or_else(|_| {
+                error!("Failed to listen for the terminate signal");
+                std::process::exit(1);
+            })
             .recv()
             .await;
     };
@@ -58,5 +64,6 @@ pub async fn shutdown(state: AppState) {
         _ = terminate => {}
     };
 
+    info!("Shutting down ... ");
     state.db.close().await;
 }
