@@ -1,4 +1,6 @@
 mod config;
 
 #[tokio::main]
-async fn main() {}
+async fn main() -> anyhow::Result<()> {
+    Ok(())
+}
