@@ -52,19 +52,17 @@ impl IntoResponse for AppError {
             AppError::Validation(validation_errors) => {
                 let message = validation_errors
                     .field_errors()
-                    .iter()
-                    .map(|(field, err)| {
-                        format!(
-                            "{}: {}",
-                            field,
-                            err.first()
-                                .and_then(|e| e.message.as_ref())
-                                .map(|msg| msg.to_string())
-                                .unwrap_or_else(|| "invalid  input".to_string())
-                        )
+                    .values()
+                    .map(|err| {
+                        err.first()
+                            .and_then(|e| e.message.as_ref())
+                            .map(|msg| msg.to_string())
+                            .unwrap_or_else(|| "invalid  input".to_string())
                     })
                     .collect::<Vec<String>>()
-                    .join(", ");
+                    .first()
+                    .unwrap_or(&String::from("invalid input"))
+                    .to_string();
 
                 log::error!("Validation error: {}", message);
                 (StatusCode::BAD_REQUEST, message)
