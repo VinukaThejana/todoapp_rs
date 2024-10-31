@@ -2858,6 +2858,7 @@ dependencies = [
  "envy",
  "log",
  "once_cell",
+ "regex",
  "sea-orm",
  "serde",
  "serde_json",
