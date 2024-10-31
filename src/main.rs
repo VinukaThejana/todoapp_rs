@@ -9,7 +9,9 @@ use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 
 mod config;
 mod database;
+mod entity;
 mod error;
+mod handler;
 mod model;
 
 #[tokio::main]
@@ -65,5 +67,8 @@ pub async fn shutdown(state: AppState) {
     };
 
     info!("Shutting down ... ");
-    state.db.close().await;
+    state.db.close().await.unwrap_or_else(|err| {
+        error!("Failed to close the database connection: {}", err);
+        std::process::exit(1);
+    });
 }

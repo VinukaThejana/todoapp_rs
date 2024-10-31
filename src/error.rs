@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use sea_orm::DbErr;
 use serde_json::json;
 use thiserror::Error;
 use validator::ValidationErrors;
@@ -6,7 +7,7 @@ use validator::ValidationErrors;
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error(transparent)]
-    Database(#[from] sqlx::Error),
+    Database(#[from] DbErr),
 
     #[error("not found")]
     NotFound,
@@ -22,9 +23,9 @@ pub enum AppError {
 }
 
 impl AppError {
-    pub fn from_sqlx_error(err: sqlx::Error) -> Self {
+    pub fn from_db_error(err: DbErr) -> Self {
         match err {
-            sqlx::Error::RowNotFound => AppError::NotFound,
+            DbErr::RecordNotFound(_) => AppError::NotFound,
             _ => AppError::Database(err),
         }
     }
