@@ -4,22 +4,20 @@ use crate::{
 };
 use sea_orm::*;
 
-pub async fn create(data: user::Model, db: &DatabaseConnection) -> Result<user::Model, DbErr> {
-    let res = User::insert(user::ActiveModel {
-        email: Set(data.email.clone()),
-        name: Set(data.name.clone()),
-        password: Set(data.password.clone()),
+pub async fn create(
+    email: String,
+    name: String,
+    password: String,
+    db: &DatabaseConnection,
+) -> Result<user::Model, DbErr> {
+    User::insert(user::ActiveModel {
+        email: Set(email),
+        name: Set(name),
+        password: Set(password),
         ..Default::default()
     })
-    .exec(db)
-    .await?;
-
-    Ok(user::Model {
-        id: res.last_insert_id,
-        email: data.email,
-        name: data.name,
-        password: data.password,
-    })
+    .exec_with_returning(db)
+    .await
 }
 
 pub async fn find_by_id(id: String, db: &DatabaseConnection) -> Result<Option<user::Model>, DbErr> {
