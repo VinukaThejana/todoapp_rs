@@ -72,7 +72,6 @@ pub static ENV: Lazy<Env> = Lazy::new(Env::new);
 
 fn validate_database_url(database_url: &str) -> Result<(), ValidationError> {
     if database_url.is_empty() {
-        //return Err(ValidationError::new("Database url must be provided"));
         return Err(ValidationError::new("database_url")
             .with_message(Cow::Owned("Database url must be provided".to_string())));
     }
