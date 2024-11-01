@@ -1,9 +1,9 @@
 use crate::{
-    entity::{prelude::Todo, session::Model, todo},
+    entity::{prelude::Todo, todo},
     model::todo::{PaginatedTodo, UpdateTodo},
+    utils::paginate::Paginator,
 };
 use sea_orm::*;
-use todoapp_rs::Paginator;
 
 pub async fn create(data: todo::Model, db: &DatabaseConnection) -> Result<todo::Model, DbErr> {
     Todo::insert(todo::ActiveModel {
