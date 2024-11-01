@@ -1,24 +1,21 @@
-use std::time::Duration;
-
-use axum::Router;
+use axum::{routing::post, Router};
 use config::{state::AppState, ENV};
+use handler::auth;
 use log::{error, info};
+use std::time::Duration;
 use tokio::{net::TcpListener, signal};
 use tower::ServiceBuilder;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
-
-mod config;
-mod database;
-mod entity;
-mod error;
-mod handler;
-mod model;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let state = AppState::new().await;
 
     let app = Router::new()
+        .nest(
+            "/auth",
+            Router::new().route("/register", post(auth::register)),
+        )
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
