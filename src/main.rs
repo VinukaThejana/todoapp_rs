@@ -1,8 +1,10 @@
 use axum::{routing::post, Router};
-use config::{state::AppState, ENV};
-use handler::auth;
 use log::{error, info};
 use std::time::Duration;
+use todoapp_rs::{
+    config::{state::AppState, ENV},
+    handler::auth,
+};
 use tokio::{net::TcpListener, signal};
 use tower::ServiceBuilder;
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
