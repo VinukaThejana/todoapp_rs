@@ -9,14 +9,14 @@ pub enum AppError {
     #[error(transparent)]
     Database(#[from] DbErr),
 
-    #[error("not found")]
-    NotFound,
+    #[error("not found : {0}")]
+    NotFound(String),
 
-    #[error("bad request")]
-    BadRequest,
+    #[error("bad request : {0}")]
+    BadRequest(String),
 
-    #[error("unique violation")]
-    UniqueViolation,
+    #[error("unique violation : {0}")]
+    UniqueViolation(String),
 
     #[error(transparent)]
     Validation(#[from] ValidationErrors),
@@ -28,10 +28,10 @@ pub enum AppError {
 impl AppError {
     pub fn from_db_error(err: DbErr) -> Self {
         match err {
-            DbErr::RecordNotFound(_) => AppError::NotFound,
+            DbErr::RecordNotFound(err) => AppError::NotFound(err),
             err => {
                 if is_unique_violation(&err) {
-                    AppError::UniqueViolation
+                    AppError::UniqueViolation(err.to_string())
                 } else {
                     AppError::Database(err)
                 }
@@ -50,16 +50,16 @@ impl IntoResponse for AppError {
                     String::from("something went wrong"),
                 )
             }
-            AppError::NotFound => {
-                log::error!("Not found");
+            AppError::NotFound(err) => {
+                log::error!("{err}");
                 (StatusCode::NOT_FOUND, String::from("not found"))
             }
-            AppError::BadRequest => {
-                log::error!("Bad request");
+            AppError::BadRequest(err) => {
+                log::error!("{err}");
                 (StatusCode::BAD_REQUEST, String::from("bad request"))
             }
-            AppError::UniqueViolation => {
-                log::error!("Unique violation");
+            AppError::UniqueViolation(err) => {
+                log::error!("{err}");
                 (StatusCode::CONFLICT, String::from("already exists"))
             }
             AppError::Validation(validation_errors) => {
