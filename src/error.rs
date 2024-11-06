@@ -4,6 +4,8 @@ use serde_json::json;
 use thiserror::Error;
 use validator::ValidationErrors;
 
+use crate::token::error::TokenError;
+
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error(transparent)]
@@ -17,6 +19,9 @@ pub enum AppError {
 
     #[error("unique violation : {0}")]
     UniqueViolation(String),
+
+    #[error("unauthorized : {0}")]
+    Unauthorized(String),
 
     #[error(transparent)]
     Validation(#[from] ValidationErrors),
@@ -38,6 +43,15 @@ impl AppError {
             }
         }
     }
+
+    pub fn from_token_error(err: TokenError) -> Self {
+        match err {
+            TokenError::Validation(err)
+            | TokenError::MissingClaim(err)
+            | TokenError::InvalidFormat(err) => AppError::Unauthorized(err),
+            _ => AppError::Other(err.into()),
+        }
+    }
 }
 
 impl IntoResponse for AppError {
@@ -57,6 +71,10 @@ impl IntoResponse for AppError {
             AppError::BadRequest(err) => {
                 log::error!("{err}");
                 (StatusCode::BAD_REQUEST, String::from("bad request"))
+            }
+            AppError::Unauthorized(err) => {
+                log::error!("{err}");
+                (StatusCode::UNAUTHORIZED, String::from("unauthorized"))
             }
             AppError::UniqueViolation(err) => {
                 log::error!("{err}");
