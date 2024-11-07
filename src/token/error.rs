@@ -19,4 +19,7 @@ pub enum TokenError {
 
     #[error("missing required claim: {0}")]
     MissingClaim(String),
+
+    #[error("other error: {0}")]
+    Other(String),
 }
