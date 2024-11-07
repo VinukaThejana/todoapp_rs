@@ -1,20 +1,24 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub(crate) struct Claims {
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct PrimaryClaims {
     pub sub: String,
     pub jti: String,
-    pub exp: u64,
-    pub iat: u64,
-    pub nbf: u64,
+    pub exp: usize,
+    pub iat: usize,
+    pub nbf: usize,
 }
 
-impl Claims {
+impl PrimaryClaims {
     pub fn new(sub: String, exp: u64) -> Self {
         let jti = ulid::Ulid::new().to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_secs();
+            .as_secs() as usize;
+        let exp = exp as usize;
 
         Self {
             sub,
@@ -26,20 +30,83 @@ impl Claims {
     }
 }
 
-pub(crate) struct Session {
-    pub claims: Claims,
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ExtendedClaims {
+    pub sub: String,
+    pub jti: String,
+    pub exp: usize,
+    pub iat: usize,
+    pub nbf: usize,
     pub email: String,
     pub name: String,
     pub photo_url: String,
 }
 
-impl Session {
+impl ExtendedClaims {
     pub fn new(sub: String, exp: u64, email: String, name: String, photo_url: String) -> Self {
+        let claims = PrimaryClaims::new(sub, exp);
+
         Self {
-            claims: Claims::new(sub, exp),
             email,
             name,
             photo_url,
+            sub: claims.sub,
+            jti: claims.jti,
+            exp: claims.exp,
+            iat: claims.iat,
+            nbf: claims.nbf,
         }
+    }
+}
+
+pub trait HasClaims {
+    fn get_sub(&self) -> &str;
+    fn get_jti(&self) -> &str;
+    fn get_exp(&self) -> usize;
+    fn get_iat(&self) -> usize;
+    fn get_nbf(&self) -> usize;
+}
+
+impl HasClaims for PrimaryClaims {
+    fn get_sub(&self) -> &str {
+        &self.sub
+    }
+
+    fn get_jti(&self) -> &str {
+        &self.jti
+    }
+
+    fn get_exp(&self) -> usize {
+        self.exp
+    }
+
+    fn get_iat(&self) -> usize {
+        self.iat
+    }
+
+    fn get_nbf(&self) -> usize {
+        self.nbf
+    }
+}
+
+impl HasClaims for ExtendedClaims {
+    fn get_sub(&self) -> &str {
+        &self.sub
+    }
+
+    fn get_jti(&self) -> &str {
+        &self.jti
+    }
+
+    fn get_exp(&self) -> usize {
+        self.exp
+    }
+
+    fn get_iat(&self) -> usize {
+        self.iat
+    }
+
+    fn get_nbf(&self) -> usize {
+        self.nbf
     }
 }
