@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use redis::RedisError;
 use sea_orm::{DbErr, RuntimeErr};
 use serde_json::json;
 use thiserror::Error;
@@ -10,6 +11,9 @@ use crate::token::error::TokenError;
 pub enum AppError {
     #[error(transparent)]
     Database(#[from] DbErr),
+
+    #[error(transparent)]
+    Redis(#[from] RedisError),
 
     #[error("not found : {0}")]
     NotFound(String),
@@ -59,6 +63,13 @@ impl IntoResponse for AppError {
         let (status, message) = match self {
             AppError::Database(err) => {
                 log::error!("Database error: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from("something went wrong"),
+                )
+            }
+            AppError::Redis(err) => {
+                log::error!("Redis error: {:?}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     String::from("something went wrong"),
