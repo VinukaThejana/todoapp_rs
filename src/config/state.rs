@@ -1,11 +1,12 @@
-use sea_orm::{Database, DatabaseConnection};
-
 use super::ENV;
 use log::error;
+use redis::Client as RedisClient;
+use sea_orm::{Database, DatabaseConnection};
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
+    pub rd: RedisClient,
 }
 
 impl AppState {
@@ -18,6 +19,11 @@ impl AppState {
                     std::process::exit(1);
                 });
 
-        Self { db }
+        let rd = RedisClient::open(ENV.redis_url.to_string()).unwrap_or_else(|err| {
+            error!("{}", err);
+            std::process::exit(1);
+        });
+
+        Self { db, rd }
     }
 }
