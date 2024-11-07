@@ -14,6 +14,12 @@ pub struct Env {
     #[validate(custom(function = "validate_log_level"))]
     pub rust_log: String,
 
+    #[validate(
+        length(min = 1, message = "redis_url must be provided"),
+        contains(pattern = "rediss://", message = "please provide a valid redis url")
+    )]
+    pub redis_url: String,
+
     #[validate(range(
         min = 8080,
         max = 8090,
@@ -65,6 +71,12 @@ impl Env {
         env_logger::init();
 
         env
+    }
+}
+
+impl Default for Env {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
