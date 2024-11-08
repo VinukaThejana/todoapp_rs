@@ -20,6 +20,24 @@ pub struct Env {
     )]
     pub redis_url: String,
 
+    #[validate(length(min = 1, message = "refresh token private key must be provided"))]
+    pub refresh_token_private_key: String,
+
+    #[validate(length(min = 1, message = "refresh token public key must be provided"))]
+    pub refresh_token_public_key: String,
+
+    #[validate(length(min = 1, message = "access token private key must be provided"))]
+    pub access_token_private_key: String,
+
+    #[validate(length(min = 1, message = "access token public key must be provided"))]
+    pub access_token_public_key: String,
+
+    #[validate(range(min = 1, message = "refresh token expiration must be greater than 0"))]
+    pub refresh_token_expiration: usize,
+
+    #[validate(range(min = 1, message = "access token expiration must be greater than 0"))]
+    pub access_token_expiration: usize,
+
     #[validate(range(
         min = 8080,
         max = 8090,
@@ -32,7 +50,7 @@ impl Env {
     pub fn new() -> Self {
         dotenv().expect("Failed to load the .env file");
 
-        let env: Self = envy::from_env().unwrap_or_else(|_| {
+        let env: Self = envy::from_env().unwrap_or_else(|err| {
             println!("Failed to load the environment variables, exiting ... ");
             std::process::exit(1);
         });
