@@ -13,13 +13,12 @@ pub(crate) struct PrimaryClaims {
 }
 
 impl PrimaryClaims {
-    pub fn new(sub: String, exp: u64, rjti: Option<String>) -> Self {
-        let jti = ulid::Ulid::new().to_string();
+    pub fn new(sub: String, exp: usize, jti: Option<String>, rjti: Option<String>) -> Self {
+        let jti = jti.unwrap_or(ulid::Ulid::new().to_string());
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as usize;
-        let exp = exp as usize;
         let rjti = rjti.unwrap_or(jti.clone());
 
         Self {
@@ -46,8 +45,8 @@ pub(crate) struct ExtendedClaims {
 }
 
 impl ExtendedClaims {
-    pub fn new(sub: String, exp: u64, email: String, name: String, photo_url: String) -> Self {
-        let claims = PrimaryClaims::new(sub, exp, None);
+    pub fn new(sub: String, exp: usize, email: String, name: String, photo_url: String) -> Self {
+        let claims = PrimaryClaims::new(sub, exp, None, None);
 
         Self {
             email,
