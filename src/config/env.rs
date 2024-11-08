@@ -32,8 +32,17 @@ pub struct Env {
     #[validate(length(min = 1, message = "access token public key must be provided"))]
     pub access_token_public_key: String,
 
+    #[validate(length(min = 1, message = "session token private key must be provided"))]
+    pub session_token_private_key: String,
+
+    #[validate(length(min = 1, message = "session token public key must be provided"))]
+    pub session_token_public_key: String,
+
     #[validate(range(min = 1, message = "refresh token expiration must be greater than 0"))]
     pub refresh_token_expiration: usize,
+
+    #[validate(range(min = 1, message = "session token expiration must be greater than 0"))]
+    pub session_token_expiration: usize,
 
     #[validate(range(min = 1, message = "access token expiration must be greater than 0"))]
     pub access_token_expiration: usize,
