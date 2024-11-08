@@ -6,23 +6,26 @@ use serde::{Deserialize, Serialize};
 pub(crate) struct PrimaryClaims {
     pub sub: String,
     pub jti: String,
+    pub rjti: String,
     pub exp: usize,
     pub iat: usize,
     pub nbf: usize,
 }
 
 impl PrimaryClaims {
-    pub fn new(sub: String, exp: u64) -> Self {
+    pub fn new(sub: String, exp: u64, rjti: Option<String>) -> Self {
         let jti = ulid::Ulid::new().to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as usize;
         let exp = exp as usize;
+        let rjti = rjti.unwrap_or(jti.clone());
 
         Self {
             sub,
             jti,
+            rjti,
             exp,
             iat: now,
             nbf: now,
@@ -44,7 +47,7 @@ pub(crate) struct ExtendedClaims {
 
 impl ExtendedClaims {
     pub fn new(sub: String, exp: u64, email: String, name: String, photo_url: String) -> Self {
-        let claims = PrimaryClaims::new(sub, exp);
+        let claims = PrimaryClaims::new(sub, exp, None);
 
         Self {
             email,
@@ -62,6 +65,7 @@ impl ExtendedClaims {
 pub trait HasClaims {
     fn get_sub(&self) -> &str;
     fn get_jti(&self) -> &str;
+    fn get_rjti(&self) -> &str;
     fn get_exp(&self) -> usize;
     fn get_iat(&self) -> usize;
     fn get_nbf(&self) -> usize;
@@ -74,6 +78,10 @@ impl HasClaims for PrimaryClaims {
 
     fn get_jti(&self) -> &str {
         &self.jti
+    }
+
+    fn get_rjti(&self) -> &str {
+        &self.rjti
     }
 
     fn get_exp(&self) -> usize {
@@ -95,6 +103,10 @@ impl HasClaims for ExtendedClaims {
     }
 
     fn get_jti(&self) -> &str {
+        &self.jti
+    }
+
+    fn get_rjti(&self) -> &str {
         &self.jti
     }
 
