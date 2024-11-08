@@ -27,6 +27,9 @@ pub enum AppError {
     #[error("unauthorized : {0}")]
     Unauthorized(String),
 
+    #[error("incorrect credentials: {0}")]
+    IncorrectCredentials(String),
+
     #[error(transparent)]
     Validation(#[from] ValidationErrors),
 
@@ -86,6 +89,13 @@ impl IntoResponse for AppError {
             AppError::Unauthorized(err) => {
                 log::error!("{err}");
                 (StatusCode::UNAUTHORIZED, String::from("unauthorized"))
+            }
+            AppError::IncorrectCredentials(err) => {
+                log::error!("{err}");
+                (
+                    StatusCode::UNAUTHORIZED,
+                    String::from("credentials are not valid"),
+                )
             }
             AppError::UniqueViolation(err) => {
                 log::error!("{err}");
