@@ -2,6 +2,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
+use crate::config::state::AppState;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct PrimaryClaims {
     pub sub: String,

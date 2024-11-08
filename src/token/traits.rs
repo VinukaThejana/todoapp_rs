@@ -1,10 +1,9 @@
+use super::{claims, error::TokenError, TokenType};
 use crate::config::state::AppState;
 use base64::prelude::*;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use redis::Commands;
 use serde::{Deserialize, Serialize};
-
-use super::{claims, error::TokenError, TokenType};
 
 pub enum TokenResponse {
     Access(String),
