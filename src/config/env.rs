@@ -50,7 +50,7 @@ impl Env {
     pub fn new() -> Self {
         dotenv().expect("Failed to load the .env file");
 
-        let env: Self = envy::from_env().unwrap_or_else(|err| {
+        let env: Self = envy::from_env().unwrap_or_else(|_| {
             println!("Failed to load the environment variables, exiting ... ");
             std::process::exit(1);
         });

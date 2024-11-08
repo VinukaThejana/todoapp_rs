@@ -1,8 +1,5 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use serde::{Deserialize, Serialize};
-
-use crate::config::state::AppState;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct PrimaryClaims {
@@ -15,7 +12,12 @@ pub(crate) struct PrimaryClaims {
 }
 
 impl PrimaryClaims {
-    pub fn new(sub: String, exp: usize, jti: Option<String>, rjti: Option<String>) -> Self {
+    pub fn new(
+        sub: String,
+        exp: usize,
+        jti: Option<String>,
+        rjti: Option<String>,
+    ) -> (Self, String) {
         let jti = jti.unwrap_or(ulid::Ulid::new().to_string());
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -23,14 +25,17 @@ impl PrimaryClaims {
             .as_secs() as usize;
         let rjti = rjti.unwrap_or(jti.clone());
 
-        Self {
-            sub,
+        (
+            Self {
+                sub,
+                jti: jti.clone(),
+                rjti,
+                exp,
+                iat: now,
+                nbf: now,
+            },
             jti,
-            rjti,
-            exp,
-            iat: now,
-            nbf: now,
-        }
+        )
     }
 }
 
@@ -48,7 +53,7 @@ pub(crate) struct ExtendedClaims {
 
 impl ExtendedClaims {
     pub fn new(sub: String, exp: usize, email: String, name: String, photo_url: String) -> Self {
-        let claims = PrimaryClaims::new(sub, exp, None, None);
+        let (claims, _) = PrimaryClaims::new(sub, exp, None, None);
 
         Self {
             email,

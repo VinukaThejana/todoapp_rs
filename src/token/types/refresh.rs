@@ -3,26 +3,23 @@ use crate::{
     token::{
         claims::PrimaryClaims,
         error::TokenError,
-        traits::{Token, TokenResponse},
+        traits::{Token, TokenParams, TokenResponse},
         TokenType,
     },
 };
-use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use redis::Commands;
 use ulid::Ulid;
 
 pub struct Refresh {
-    pub public_key: String,
-    pub private_key: String,
+    pub state: AppState,
     pub user_id: String,
     pub exp: usize,
 }
 
 impl Refresh {
-    pub fn new(user_id: String) -> Self {
+    pub fn new(state: AppState, user_id: String) -> Self {
         Self {
-            public_key: ENV.refresh_token_public_key.clone(),
-            private_key: ENV.refresh_token_private_key.clone(),
+            state,
             user_id,
             exp: ENV.refresh_token_expiration,
         }
@@ -30,42 +27,47 @@ impl Refresh {
 }
 
 impl Token<PrimaryClaims> for Refresh {
-    fn create(&self, state: AppState) -> Result<TokenResponse, TokenError> {
-        let claims = PrimaryClaims::new(self.user_id.clone(), self.exp, None, None);
-        let token = jsonwebtoken::encode(
-            &Header::new(Algorithm::RS256),
-            &claims,
-            &EncodingKey::from_rsa_pem(self.secret(self.private_key.clone())?.as_bytes())
-                .map_err(|err| TokenError::Creation(err.to_string()))?,
-        )
-        .map_err(|err| TokenError::Creation(err.to_string()))?;
+    fn state(&self) -> AppState {
+        self.state.clone()
+    }
+
+    fn public_key(&self) -> String {
+        ENV.refresh_token_public_key.clone()
+    }
+
+    fn private_key(&self) -> String {
+        ENV.refresh_token_private_key.clone()
+    }
+
+    fn create(&self, _: TokenParams) -> Result<TokenResponse, TokenError> {
+        let (claims, rjti) = PrimaryClaims::new(self.user_id.clone(), self.exp, None, None);
         let ajti = Ulid::new().to_string();
 
-        let mut conn = state
+        let token = self.generate(claims)?;
+
+        let mut conn = self
+            .state
             .rd
             .get_connection()
             .map_err(|err| TokenError::Other(err.to_string()))?;
 
         redis::pipe()
             .set(
-                TokenType::Refresh.get_key(claims.jti.as_str()),
+                TokenType::Refresh.get_key(rjti.as_str()),
                 self.user_id.clone(),
             )
-            .set(TokenType::Access.get_key(ajti.as_str()), claims.jti.clone())
+            .set(TokenType::Access.get_key(ajti.as_str()), rjti.as_str())
             .query(&mut conn)
             .map_err(|err| TokenError::Other(err.to_string()))?;
 
-        Ok(TokenResponse::Refresh {
-            token,
-            rjti: claims.rjti,
-            ajti,
-        })
+        Ok(TokenResponse::Refresh { token, rjti, ajti })
     }
 }
 
 impl Refresh {
-    fn delete(&self, jti: String, state: AppState) -> Result<(), TokenError> {
-        let mut conn = state
+    fn delete(&self, jti: String) -> Result<(), TokenError> {
+        let mut conn = self
+            .state
             .rd
             .get_connection()
             .map_err(|err| TokenError::Other(err.to_string()))?;
