@@ -80,7 +80,7 @@ where
                     ));
                 }
             }
-            _ => panic!("please provide a custom implementation for the session token"),
+            _ => unimplemented!("use the decode function to decode the session token"),
         }
         Ok(claims)
     }
