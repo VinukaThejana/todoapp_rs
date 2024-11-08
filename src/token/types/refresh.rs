@@ -1,11 +1,7 @@
+use crate::token::types::{params::TokenParams, response::TokenResponse};
 use crate::{
     config::{state::AppState, ENV},
-    token::{
-        claims::PrimaryClaims,
-        error::TokenError,
-        traits::{Token, TokenParams, TokenResponse},
-        TokenType,
-    },
+    token::{claims::PrimaryClaims, error::TokenError, traits::Token, TokenType},
 };
 use redis::Commands;
 use ulid::Ulid;
