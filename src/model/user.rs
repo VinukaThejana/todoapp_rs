@@ -25,6 +25,15 @@ pub struct CreateUserReq {
     pub password: String,
 }
 
+#[derive(Debug, Validate, Serialize, Deserialize)]
+pub struct LoginUserReq {
+    #[validate(email(message = "email address is not valid"))]
+    pub email: String,
+
+    #[validate(custom(function = "validate_password"))]
+    pub password: String,
+}
+
 fn validate_password(password: &str) -> Result<(), ValidationError> {
     let checks = [
         (
