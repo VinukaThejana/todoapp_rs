@@ -1,47 +1,52 @@
-use std::borrow::Cow;
-
+use base64::prelude::*;
 use dotenvy::dotenv;
 use envy;
 use once_cell::sync::Lazy;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
+use std::{borrow::Cow, sync::Arc};
 use validator::{Validate, ValidationError};
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct Env {
     #[validate(custom(function = "validate_database_url"))]
-    pub database_url: String,
+    #[serde(deserialize_with = "deserialize_arc_str")]
+    pub database_url: Arc<str>,
 
     #[validate(custom(function = "validate_log_level"))]
-    pub rust_log: String,
+    #[serde(deserialize_with = "deserialize_arc_str")]
+    pub rust_log: Arc<str>,
 
-    #[validate(
-        length(min = 1, message = "redis_url must be provided"),
-        contains(pattern = "rediss://", message = "please provide a valid redis url")
-    )]
-    pub redis_url: String,
+    #[validate(custom(function = "validate_redis_url"))]
+    #[serde(deserialize_with = "deserialize_arc_str")]
+    pub redis_url: Arc<str>,
 
     #[validate(length(min = 1, message = "refresh token private key must be provided"))]
-    pub refresh_token_private_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub refresh_token_private_key: Arc<Vec<u8>>,
 
     #[validate(length(min = 1, message = "refresh token public key must be provided"))]
-    pub refresh_token_public_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub refresh_token_public_key: Arc<Vec<u8>>,
 
     #[validate(length(min = 1, message = "access token private key must be provided"))]
-    pub access_token_private_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub access_token_private_key: Arc<Vec<u8>>,
 
     #[validate(length(min = 1, message = "access token public key must be provided"))]
-    pub access_token_public_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub access_token_public_key: Arc<Vec<u8>>,
 
     #[validate(length(min = 1, message = "session token private key must be provided"))]
-    pub session_token_private_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub session_token_private_key: Arc<Vec<u8>>,
 
     #[validate(length(min = 1, message = "session token public key must be provided"))]
-    pub session_token_public_key: String,
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub session_token_public_key: Arc<Vec<u8>>,
 
     #[validate(range(min = 1, message = "refresh token expiration must be greater than 0"))]
     pub refresh_token_expiration: usize,
 
-    #[validate(range(min = 1, message = "session token expiration must be greater than 0"))]
     pub session_token_expiration: usize,
 
     #[validate(range(min = 1, message = "access token expiration must be greater than 0"))]
@@ -147,4 +152,43 @@ fn validate_log_level(level: &str) -> Result<(), ValidationError> {
     }
 
     Ok(())
+}
+
+fn validate_redis_url(url: &str) -> Result<(), ValidationError> {
+    if url.is_empty() {
+        return Err(ValidationError::new("redis_url")
+            .with_message(Cow::Owned("Redis URL must be provided".to_string())));
+    }
+
+    if url.starts_with("redis://") {
+        return Err(ValidationError::new("redis_url")
+            .with_message(Cow::Owned("Redis URL should be TLS encrypted".to_string())));
+    }
+
+    if !url.starts_with("rediss://") {
+        return Err(ValidationError::new("redis_url")
+            .with_message(Cow::Owned("Please provide a valid redis URL".to_string())));
+    }
+
+    Ok(())
+}
+
+fn deserialize_base64<'de, D>(deserializer: D) -> Result<Arc<Vec<u8>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: String = String::deserialize(deserializer)?;
+    let bytes = BASE64_STANDARD
+        .decode(s.as_bytes())
+        .map_err(serde::de::Error::custom)?;
+
+    Ok(Arc::new(bytes))
+}
+
+fn deserialize_arc_str<'de, D>(deserializer: D) -> Result<Arc<str>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: String = String::deserialize(deserializer)?;
+    Ok(s.into())
 }
