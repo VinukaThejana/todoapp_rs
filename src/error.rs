@@ -5,8 +5,6 @@ use serde_json::json;
 use thiserror::Error;
 use validator::ValidationErrors;
 
-use crate::token::error::TokenError;
-
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error(transparent)]
@@ -48,15 +46,6 @@ impl AppError {
                     AppError::Database(err)
                 }
             }
-        }
-    }
-
-    pub fn from_token_error(err: TokenError) -> Self {
-        match err {
-            TokenError::Validation(err)
-            | TokenError::MissingClaim(err)
-            | TokenError::InvalidFormat(err) => AppError::Unauthorized(err),
-            _ => AppError::Other(err.into()),
         }
     }
 }

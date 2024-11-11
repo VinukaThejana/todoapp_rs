@@ -4,5 +4,4 @@ pub mod entity;
 pub mod error;
 pub mod handler;
 pub mod model;
-pub mod token;
 pub mod utils;
