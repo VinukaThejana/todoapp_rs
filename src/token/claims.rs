@@ -13,7 +13,7 @@ pub(crate) struct PrimaryClaims {
 }
 
 impl PrimaryClaims {
-    pub fn new(sub: String, exp: usize, jti: Option<String>, rjti: Option<String>) -> (Self) {
+    pub fn new(sub: String, exp: usize, jti: Option<String>, rjti: Option<String>) -> Self {
         let jti = jti.unwrap_or(ulid::Ulid::new().to_string());
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
