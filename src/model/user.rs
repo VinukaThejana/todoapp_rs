@@ -9,6 +9,13 @@ pub struct UpdateUser {
     pub password: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserDetails {
+    pub email: String,
+    pub name: String,
+    pub photo_url: String,
+}
+
 #[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct CreateUserReq {
     #[validate(email(message = "please provide a valid email address"))]
