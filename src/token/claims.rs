@@ -1,6 +1,6 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
+use crate::model::user::UserDetails;
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct PrimaryClaims {
@@ -36,9 +36,9 @@ impl PrimaryClaims {
 pub(crate) struct ExtendedClaims {
     #[serde(flatten)]
     pub primary: PrimaryClaims,
-    pub email: String,
-    pub name: String,
-    pub photo_url: String,
+
+    #[serde(flatten)]
+    pub user: UserDetails,
 }
 
 impl ExtendedClaims {
@@ -46,9 +46,11 @@ impl ExtendedClaims {
         let claims = PrimaryClaims::new(sub, exp, None, None);
         Self {
             primary: claims,
-            email,
-            name,
-            photo_url,
+            user: UserDetails {
+                email,
+                name,
+                photo_url,
+            },
         }
     }
 }
