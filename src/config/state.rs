@@ -1,6 +1,6 @@
 use super::ENV;
 use log::error;
-use redis::Client as RedisClient;
+use redis::{aio::MultiplexedConnection, Client as RedisClient, RedisError};
 use sea_orm::{Database, DatabaseConnection};
 
 #[derive(Clone)]
@@ -25,5 +25,17 @@ impl AppState {
         });
 
         Self { db, rd }
+    }
+}
+
+impl AppState {
+    pub async fn get_redis_conn<E>(&self) -> Result<MultiplexedConnection, E>
+    where
+        RedisError: Into<E>,
+    {
+        self.rd
+            .get_multiplexed_async_connection()
+            .await
+            .map_err(Into::into)
     }
 }
