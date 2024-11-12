@@ -21,6 +21,7 @@ where
     fn state(&self) -> AppState;
     fn public_key(&self) -> &[u8];
     fn private_key(&self) -> &[u8];
+    fn exp(&self) -> usize;
 
     fn encode_rsa_key_pem(&self, key: &[u8]) -> EncodingKey {
         EncodingKey::from_rsa_pem(key).unwrap_or_else(|err| {

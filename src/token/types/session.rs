@@ -1,5 +1,6 @@
 use crate::{
     config::{state::AppState, ENV},
+    model::user::UserDetails,
     token::{
         claims::ExtendedClaims,
         error::TokenError,
@@ -10,30 +11,42 @@ use crate::{
 
 pub struct Session {
     pub state: AppState,
-    pub user_id: String,
-    pub email: String,
-    pub name: String,
-    pub photo_url: String,
-    pub exp: usize,
+    pub user_id: Option<String>,
+    pub user: Option<UserDetails>,
 }
 
 impl Session {
+    pub fn default(state: AppState) -> Self {
+        Self {
+            state,
+            user_id: None,
+            user: None,
+        }
+    }
+
     pub fn new(
         state: AppState,
         user_id: String,
         email: String,
         name: String,
         photo_url: String,
-        exp: usize,
     ) -> Self {
         Self {
             state,
-            user_id,
-            email,
-            name,
-            photo_url,
-            exp,
+            user_id: Some(user_id),
+            user: Some(UserDetails {
+                email,
+                name,
+                photo_url,
+            }),
         }
+    }
+
+    fn user(&self) -> (&str, &UserDetails) {
+        self.user_id
+            .as_deref()
+            .zip(self.user.as_ref())
+            .expect("please provide the user_details and the user_id to create a new session token")
     }
 }
 
@@ -50,28 +63,29 @@ impl Token<ExtendedClaims> for Session {
         &ENV.session_token_private_key
     }
 
-    async fn create(&self, _: TokenParams) -> Result<TokenResponse, TokenError> {
-        let claims = ExtendedClaims::new(
-            self.user_id.clone(),
-            self.exp,
-            self.email.clone(),
-            self.name.clone(),
-            self.photo_url.clone(),
-        );
-        let token = self.generate(&claims)?;
+    fn exp(&self) -> usize {
+        ENV.session_token_expiration
+    }
 
-        Ok(TokenResponse::Session(token))
+    async fn create(&self, _: TokenParams) -> Result<TokenResponse, TokenError> {
+        let (user_id, user) = self.user();
+
+        Ok(TokenResponse::Session(self.generate(
+            &ExtendedClaims::new(
+                user_id.to_owned(),
+                self.exp(),
+                user.email.clone(),
+                user.name.clone(),
+                user.photo_url.clone(),
+            ),
+        )?))
     }
 
     async fn verify(
         &self,
         token: String,
         _: crate::token::TokenType,
-    ) -> Result<ExtendedClaims, TokenError>
-    where
-        ExtendedClaims: Send,
-    {
-        let claims = self.decode(token)?;
-        Ok(claims)
+    ) -> Result<ExtendedClaims, TokenError> {
+        self.decode(token)
     }
 }

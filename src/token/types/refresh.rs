@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use super::{params::TokenParams, response::TokenResponse};
 use crate::{
     config::{state::AppState, ENV},
@@ -10,20 +8,32 @@ use crate::{
         TokenType,
     },
 };
+use anyhow::anyhow;
 
 pub struct Refresh {
     pub state: AppState,
-    pub user_id: String,
-    pub exp: usize,
+    pub user_id: Option<String>,
 }
 
 impl Refresh {
-    pub fn new(state: AppState, user_id: String, exp: usize) -> Self {
+    pub fn default(state: AppState) -> Self {
         Self {
             state,
-            user_id,
-            exp,
+            user_id: None,
         }
+    }
+
+    pub fn new(state: AppState, user_id: String) -> Self {
+        Self {
+            state,
+            user_id: Some(user_id),
+        }
+    }
+
+    fn user_id(&self) -> &str {
+        self.user_id
+            .as_deref()
+            .expect("provide the user_id to create a new refresh token")
     }
 }
 
@@ -40,8 +50,12 @@ impl Token<PrimaryClaims> for Refresh {
         &ENV.refresh_token_private_key
     }
 
+    fn exp(&self) -> usize {
+        ENV.refresh_token_expiration
+    }
+
     async fn create(&self, _: TokenParams) -> Result<TokenResponse, TokenError> {
-        let claims = PrimaryClaims::new(self.user_id.clone(), self.exp, None, None);
+        let claims = PrimaryClaims::new(self.user_id().to_owned(), self.exp(), None, None);
         let token = self.generate(&claims)?;
         let ajti = ulid::Ulid::new().to_string();
 
@@ -56,7 +70,7 @@ impl Token<PrimaryClaims> for Refresh {
             .arg(TokenType::Refresh.get_key(claims.jti()))
             .arg(&self.user_id)
             .arg("EX")
-            .arg(self.exp)
+            .arg(self.exp())
             .ignore()
             .cmd("SET")
             .arg(TokenType::Access.get_key(&ajti))
