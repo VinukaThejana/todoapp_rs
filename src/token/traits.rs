@@ -74,10 +74,9 @@ where
 
             let mut conn = self
                 .state()
-                .rd
-                .get_multiplexed_async_connection()
+                .get_redis_conn()
                 .await
-                .map_err(|err| TokenError::Other(err.into()))?;
+                .map_err(TokenError::Other)?;
 
             let value: Option<String> = redis::cmd("GET")
                 .arg(token_type.get_key(claims.jti()))

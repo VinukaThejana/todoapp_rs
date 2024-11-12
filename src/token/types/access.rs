@@ -57,11 +57,10 @@ impl Token<PrimaryClaims> for Access {
 
         if params.ajti.is_none() {
             let mut conn = self
-                .state
-                .rd
-                .get_multiplexed_async_connection()
+                .state()
+                .get_redis_conn()
                 .await
-                .map_err(|err| TokenError::Other(err.into()))?;
+                .map_err(TokenError::Other)?;
 
             redis::cmd("SET")
                 .arg(TokenType::Access.get_key(&ajti))
@@ -83,11 +82,10 @@ impl Access {
         let token = self.generate(&claims)?;
 
         let mut conn = self
-            .state
-            .rd
-            .get_multiplexed_async_connection()
+            .state()
+            .get_redis_conn()
             .await
-            .map_err(|err| TokenError::Other(err.into()))?;
+            .map_err(TokenError::Other)?;
 
         let value: Option<String> = redis::cmd("GET")
             .arg(TokenType::Access.get_key(&rjti))

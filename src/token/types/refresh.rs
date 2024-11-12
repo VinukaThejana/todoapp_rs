@@ -46,11 +46,10 @@ impl Token<PrimaryClaims> for Refresh {
         let ajti = ulid::Ulid::new().to_string();
 
         let mut conn = self
-            .state
-            .rd
-            .get_multiplexed_async_connection()
+            .state()
+            .get_redis_conn()
             .await
-            .map_err(|err| TokenError::Other(err.into()))?;
+            .map_err(TokenError::Other)?;
 
         redis::pipe()
             .cmd("SET")
@@ -80,11 +79,10 @@ impl Token<PrimaryClaims> for Refresh {
 impl Refresh {
     pub async fn delete(&self, rjti: &str) -> Result<(), TokenError> {
         let mut conn = self
-            .state
-            .rd
-            .get_multiplexed_async_connection()
+            .state()
+            .get_redis_conn()
             .await
-            .map_err(|err| TokenError::Other(err.into()))?;
+            .map_err(TokenError::Other)?;
 
         let value: Option<String> = redis::cmd("GET")
             .arg(TokenType::Refresh.get_key(rjti))
