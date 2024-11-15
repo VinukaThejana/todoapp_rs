@@ -25,7 +25,7 @@ pub async fn find_by_id(id: String, db: &DatabaseConnection) -> Result<Option<us
 }
 
 pub async fn find_by_email(
-    email: String,
+    email: &String,
     db: &DatabaseConnection,
 ) -> Result<Option<user::Model>, DbErr> {
     User::find()
