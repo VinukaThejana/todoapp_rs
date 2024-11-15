@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TokenParams {
     pub ajti: Option<String>,
     pub rjti: Option<String>,
