@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 pub mod claims;
 pub mod error;
+pub mod service;
 pub mod traits;
 pub mod types;
 
