@@ -1,11 +1,11 @@
+use crate::token::error::TokenError;
+use anyhow::{anyhow, Error as AnyhowError};
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use redis::RedisError;
 use sea_orm::{DbErr, RuntimeErr};
 use serde_json::json;
 use thiserror::Error;
 use validator::ValidationErrors;
-
-use crate::token::error::TokenError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -15,20 +15,20 @@ pub enum AppError {
     #[error(transparent)]
     Redis(#[from] RedisError),
 
-    #[error("not found : {0}")]
-    NotFound(String),
+    #[error("(NotFound): {0}")]
+    NotFound(#[source] AnyhowError),
 
-    #[error("bad request : {0}")]
-    BadRequest(String),
+    #[error("(BadRequest): {0}")]
+    BadRequest(#[source] AnyhowError),
 
-    #[error("unique violation : {0}")]
-    UniqueViolation(String),
+    #[error("(UniqueViolation): {0}")]
+    UniqueViolation(#[source] AnyhowError),
 
-    #[error("unauthorized : {0}")]
-    Unauthorized(String),
+    #[error("(Unauthorized): {0}")]
+    Unauthorized(#[source] AnyhowError),
 
-    #[error("incorrect credentials: {0}")]
-    IncorrectCredentials(String),
+    #[error("(IncorrectCredentials): {0}")]
+    IncorrectCredentials(#[source] AnyhowError),
 
     #[error(transparent)]
     Validation(#[from] ValidationErrors),
@@ -40,10 +40,10 @@ pub enum AppError {
 impl AppError {
     pub fn from_db_error(err: DbErr) -> Self {
         match err {
-            DbErr::RecordNotFound(err) => AppError::NotFound(err),
+            DbErr::RecordNotFound(err) => AppError::NotFound(anyhow!(err)),
             err => {
                 if is_unique_violation(&err) {
-                    AppError::UniqueViolation(err.to_string())
+                    AppError::UniqueViolation(err.into())
                 } else {
                     AppError::Database(err)
                 }
@@ -56,7 +56,7 @@ impl AppError {
             TokenError::MissingClaims(source)
             | TokenError::InvalidFormat(source)
             | TokenError::Parsing(source)
-            | TokenError::Validation(source) => AppError::Unauthorized(source.to_string()),
+            | TokenError::Validation(source) => AppError::Unauthorized(source.into()),
 
             _ => AppError::Other(err.into()),
         }
