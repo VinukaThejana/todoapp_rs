@@ -16,7 +16,9 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .nest(
             "/auth",
-            Router::new().route("/register", post(auth::register)),
+            Router::new()
+                .route("/register", post(auth::register))
+                .route("/login", post(auth::login)),
         )
         .layer(
             ServiceBuilder::new()
