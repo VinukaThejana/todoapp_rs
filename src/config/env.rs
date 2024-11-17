@@ -53,6 +53,10 @@ pub struct Env {
     #[serde(deserialize_with = "deserialize_arc_str")]
     pub redis_url: Arc<str>,
 
+    #[validate(length(min = 1, message = "domain is required and cannot be empty"))]
+    #[serde(deserialize_with = "deserialize_arc_str")]
+    pub domain: Arc<str>,
+
     #[validate(custom(function = "verify::env_mode"))]
     #[serde(deserialize_with = "deserialize_arc_str")]
     pub env: Arc<str>,
