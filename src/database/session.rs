@@ -30,7 +30,7 @@ pub async fn delete(token: String, db: &DatabaseConnection) -> Result<(), DbErr>
     Ok(())
 }
 
-pub async fn delete_expired(user_id: String, db: &DatabaseConnection) -> Result<(), DbErr> {
+pub async fn delete_expired(user_id: &str, db: &DatabaseConnection) -> Result<(), DbErr> {
     let now: i64 = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|err| {
