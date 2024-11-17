@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use validator::ValidationError;
 
+use crate::config::env::EnvMode;
+
 pub fn database_url(database_url: &str) -> Result<(), ValidationError> {
     if database_url.is_empty() {
         return Err(ValidationError::new("database_url")
@@ -55,6 +57,16 @@ pub fn redis_url(url: &str) -> Result<(), ValidationError> {
     if !url.starts_with("rediss://") {
         return Err(ValidationError::new("redis_url")
             .with_message(Cow::Owned("Please provide a valid redis URL".to_string())));
+    }
+
+    Ok(())
+}
+
+pub fn env_mode(mode: &str) -> Result<(), ValidationError> {
+    if !EnvMode::is_valid(mode) {
+        return Err(ValidationError::new("env_mode").with_message(Cow::Owned(
+            "Please provide a valid environment (prd or dev)".to_string(),
+        )));
     }
 
     Ok(())

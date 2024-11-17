@@ -93,7 +93,7 @@ pub async fn factory(state: AppState, user: &Model) -> Result<TokenFactory, AppE
     .await
     .map(|token| {
         let TokenResponse::Session(token) = token else {
-            unreachable!("§")
+            unreachable!("Session token is expected");
         };
 
         token
