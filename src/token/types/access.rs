@@ -16,7 +16,7 @@ pub struct Access {
 }
 
 impl Access {
-    pub fn defautl(state: AppState) -> Self {
+    pub fn default(state: AppState) -> Self {
         Self {
             state,
             user_id: None,
