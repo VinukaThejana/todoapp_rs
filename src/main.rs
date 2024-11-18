@@ -1,4 +1,7 @@
-use axum::{routing::post, Router};
+use axum::{
+    routing::{patch, post},
+    Router,
+};
 use log::{error, info};
 use std::time::Duration;
 use todoapp_rs::{
@@ -18,7 +21,8 @@ async fn main() -> anyhow::Result<()> {
             "/auth",
             Router::new()
                 .route("/register", post(auth::register))
-                .route("/login", post(auth::login)),
+                .route("/login", post(auth::login))
+                .route("/refresh", patch(auth::refresh)),
         )
         .layer(
             ServiceBuilder::new()

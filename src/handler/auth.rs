@@ -1,6 +1,9 @@
-use crate::token::constants;
 use crate::token::cookies::{CookieManager, CookieParams};
 use crate::token::service::factory;
+use crate::token::traits::Token;
+use crate::token::types::access::Access;
+use crate::token::types::refresh::Refresh;
+use crate::token::{constants, TokenType};
 use crate::{
     config::{state::AppState, ENV},
     database,
@@ -114,6 +117,41 @@ pub async fn login(
         headers,
         Json(json!({
             "status": "ok",
+        })),
+    ))
+}
+
+pub async fn refresh(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let claims = Refresh::default(state.clone())
+        .verify(
+            CookieManager::get(&headers, constants::REFRESH_TOKEN_COOKIE_NAME)
+                .ok_or_else(|| AppError::Unauthorized(anyhow!("Refresh token not found")))?
+                .value()
+                .to_owned(),
+            TokenType::Refresh,
+        )
+        .await
+        .map_err(AppError::from_token_error)?;
+
+    let access_token = Access::new(state.clone(), claims.sub)
+        .refresh(claims.rjti)
+        .await
+        .map_err(AppError::from_token_error)?;
+
+    let mut headers = HeaderMap::new();
+
+    headers.append(
+        "X-New-Access-Token",
+        HeaderValue::from_str(&access_token).unwrap(),
+    );
+
+    Ok((
+        headers,
+        Json(json!({
+            "status": "ok"
         })),
     ))
 }
