@@ -25,7 +25,7 @@ impl PrimaryClaims {
             sub,
             jti,
             rjti,
-            exp,
+            exp: now + exp,
             iat: now,
             nbf: now,
         }
