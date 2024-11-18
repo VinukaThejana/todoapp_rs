@@ -1,4 +1,5 @@
-use crate::config::env::EnvMode;
+use crate::token::constants;
+use crate::token::cookies::{CookieManager, CookieParams};
 use crate::token::service::factory;
 use crate::{
     config::{state::AppState, ENV},
@@ -10,7 +11,6 @@ use anyhow::anyhow;
 use axum::http::header::SET_COOKIE;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::{extract::State, response::IntoResponse, Json};
-use cookie::{time::Duration, Cookie};
 use serde_json::json;
 use validator::Validate;
 
@@ -80,19 +80,20 @@ pub async fn login(
             });
     });
 
-    let refresh_cookie = Cookie::build(("todoapp_rs_refresh_token", tokens.refresh().token()))
-        .http_only(true)
-        .path("/")
-        .secure(EnvMode::is_prd(&ENV.env))
-        .domain(&*ENV.domain)
-        .max_age(Duration::seconds(ENV.refresh_token_expiration as i64));
-
-    let session_token = Cookie::build(("todoapp_rs_session_token", tokens.session()))
-        .http_only(false)
-        .path("/")
-        .secure(EnvMode::is_prd(&ENV.env))
-        .domain(&*ENV.domain)
-        .max_age(Duration::seconds(ENV.session_token_expiration as i64));
+    let refresh_cookie = CookieManager::create(
+        constants::REFRESH_TOKEN_COOKIE_NAME,
+        tokens.refresh().token(),
+        CookieParams::default()
+            .with_age(ENV.refresh_token_expiration)
+            .with_http_only(true),
+    );
+    let session_cookie = CookieManager::create(
+        constants::SESSION_TOKEN_COOKIE_NAME,
+        tokens.session(),
+        CookieParams::default()
+            .with_age(ENV.session_token_expiration)
+            .with_http_only(false),
+    );
 
     let mut headers = HeaderMap::new();
 
@@ -106,7 +107,7 @@ pub async fn login(
     );
     headers.append(
         SET_COOKIE,
-        HeaderValue::from_str(&session_token.to_string()).unwrap(),
+        HeaderValue::from_str(&session_cookie.to_string()).unwrap(),
     );
 
     Ok((
