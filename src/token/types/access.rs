@@ -73,11 +73,31 @@ impl Token<PrimaryClaims> for Access {
                 .await
                 .map_err(TokenError::Other)?;
 
-            redis::cmd("SET")
+            let value: Option<String> = redis::cmd("GET")
+                .arg(TokenType::Refresh.get_key(&rjti))
+                .query_async(&mut conn)
+                .await
+                .map_err(|err| TokenError::Other(err.into()))?;
+
+            redis::pipe()
+                .cmd("DEL")
+                .arg(if let Some(ref v) = value {
+                    TokenType::Access.get_key(v)
+                } else {
+                    "no_key".to_string()
+                })
+                .ignore()
+                .cmd("SET")
+                .arg(TokenType::Refresh.get_key(&rjti))
+                .arg(&ajti)
+                .arg("KEEPTTL")
+                .ignore()
+                .cmd("SET")
                 .arg(TokenType::Access.get_key(&ajti))
-                .arg(&rjti)
+                .arg(self.user_id())
                 .arg("EX")
                 .arg(self.exp())
+                .ignore()
                 .query_async(&mut conn)
                 .await
                 .map_err(|err| TokenError::Other(err.into()))?;
@@ -99,7 +119,7 @@ impl Access {
             .map_err(TokenError::Other)?;
 
         let value: Option<String> = redis::cmd("GET")
-            .arg(TokenType::Access.get_key(&rjti))
+            .arg(TokenType::Refresh.get_key(&rjti))
             .query_async(&mut conn)
             .await
             .map_err(|err| TokenError::Other(err.into()))?;
@@ -111,11 +131,17 @@ impl Access {
             } else {
                 "no_key".to_string()
             })
+            .ignore()
             .cmd("SET")
             .arg(TokenType::Access.get_key(claims.jti()))
-            .arg(&rjti)
+            .arg(self.user_id())
             .arg("EX")
             .arg(self.exp())
+            .cmd("SET")
+            .arg(TokenType::Refresh.get_key(&rjti))
+            .arg(claims.jti())
+            .arg("KEEPTTL")
+            .ignore()
             .query_async(&mut conn)
             .await
             .map_err(|err| TokenError::Other(err.into()))?;

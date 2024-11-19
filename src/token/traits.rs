@@ -89,12 +89,12 @@ where
 
             match token_type {
                 TokenType::Access => {
-                    if value != claims.rjti() {
+                    if value != claims.sub() {
                         return Err(TokenError::Validation(anyhow!("access token is not valid")));
                     }
                 }
                 TokenType::Refresh => {
-                    if value != claims.sub() {
+                    if value.is_empty() {
                         return Err(TokenError::Validation(anyhow!(
                             "refresh token is not valid"
                         )));

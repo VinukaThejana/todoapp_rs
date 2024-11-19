@@ -1,5 +1,5 @@
 use axum::{
-    routing::{patch, post},
+    routing::{delete, patch, post},
     Router,
 };
 use log::{error, info};
@@ -22,7 +22,8 @@ async fn main() -> anyhow::Result<()> {
             Router::new()
                 .route("/register", post(auth::register))
                 .route("/login", post(auth::login))
-                .route("/refresh", patch(auth::refresh)),
+                .route("/refresh", patch(auth::refresh))
+                .route("/logout", delete(auth::logout)),
         )
         .layer(
             ServiceBuilder::new()

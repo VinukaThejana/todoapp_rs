@@ -1,3 +1,4 @@
+use crate::token::claims::Claims;
 use crate::token::cookies::{CookieManager, CookieParams};
 use crate::token::service::factory;
 use crate::token::traits::Token;
@@ -89,14 +90,16 @@ pub async fn login(
         CookieParams::default()
             .with_age(ENV.refresh_token_expiration)
             .with_http_only(true),
-    );
+    )
+    .to_string();
     let session_cookie = CookieManager::create(
         constants::SESSION_TOKEN_COOKIE_NAME,
         tokens.session(),
         CookieParams::default()
             .with_age(ENV.session_token_expiration)
             .with_http_only(false),
-    );
+    )
+    .to_string();
 
     let mut headers = HeaderMap::new();
 
@@ -104,14 +107,8 @@ pub async fn login(
         "X-New-Access-Token",
         HeaderValue::from_str(tokens.access()).unwrap(),
     );
-    headers.append(
-        SET_COOKIE,
-        HeaderValue::from_str(&refresh_cookie.to_string()).unwrap(),
-    );
-    headers.append(
-        SET_COOKIE,
-        HeaderValue::from_str(&session_cookie.to_string()).unwrap(),
-    );
+    headers.append(SET_COOKIE, HeaderValue::from_str(&refresh_cookie).unwrap());
+    headers.append(SET_COOKIE, HeaderValue::from_str(&session_cookie).unwrap());
 
     Ok((
         headers,
@@ -147,6 +144,52 @@ pub async fn refresh(
         "X-New-Access-Token",
         HeaderValue::from_str(&access_token).unwrap(),
     );
+
+    Ok((
+        headers,
+        Json(json!({
+            "status": "ok"
+        })),
+    ))
+}
+
+pub async fn logout(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let refresh = Refresh::default(state.clone());
+
+    let claims = refresh
+        .verify(
+            CookieManager::get(&headers, constants::REFRESH_TOKEN_COOKIE_NAME)
+                .ok_or_else(|| AppError::Unauthorized(anyhow!("Refresh token not found")))?
+                .value()
+                .to_owned(),
+            TokenType::Refresh,
+        )
+        .await
+        .map_err(AppError::from_token_error)?;
+    refresh
+        .delete(claims.rjti())
+        .await
+        .map_err(AppError::from_token_error)?;
+
+    let refresh_cookie = CookieManager::delete(
+        constants::REFRESH_TOKEN_COOKIE_NAME,
+        CookieParams::default(),
+    )
+    .to_string();
+
+    let session_cookie = CookieManager::delete(
+        constants::SESSION_TOKEN_COOKIE_NAME,
+        CookieParams::default(),
+    )
+    .to_string();
+
+    let mut headers = HeaderMap::new();
+
+    headers.append(SET_COOKIE, HeaderValue::from_str(&refresh_cookie).unwrap());
+    headers.append(SET_COOKIE, HeaderValue::from_str(&session_cookie).unwrap());
 
     Ok((
         headers,

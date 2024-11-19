@@ -12,7 +12,11 @@ pub async fn create(
     Session::insert(session::ActiveModel {
         user_id: Set(user_id),
         token: Set(token),
-        expires: Set(expires.try_into().unwrap_or(0)),
+        expires: Set(SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+            + expires.try_into().unwrap_or(0)),
         ..Default::default()
     })
     .exec_with_returning(db)
