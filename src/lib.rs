@@ -3,6 +3,7 @@ pub mod database;
 pub mod entity;
 pub mod error;
 pub mod handler;
+pub mod middleware;
 pub mod model;
 pub mod token;
 pub mod utils;

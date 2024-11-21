@@ -1,12 +1,14 @@
 use axum::{
-    routing::{delete, patch, post},
+    middleware,
+    routing::{delete, get, patch, post},
     Router,
 };
 use log::{error, info};
 use std::time::Duration;
 use todoapp_rs::{
     config::{state::AppState, ENV},
-    handler::auth,
+    handler::{auth, user},
+    middleware::auth::auth_m,
 };
 use tokio::{net::TcpListener, signal};
 use tower::ServiceBuilder;
@@ -24,6 +26,12 @@ async fn main() -> anyhow::Result<()> {
                 .route("/login", post(auth::login))
                 .route("/refresh", patch(auth::refresh))
                 .route("/logout", delete(auth::logout)),
+        )
+        .nest(
+            "/user",
+            Router::new()
+                .route("/profile", get(user::profile))
+                .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
         )
         .layer(
             ServiceBuilder::new()
