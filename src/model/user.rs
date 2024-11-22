@@ -2,10 +2,22 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use validator::{Validate, ValidationError};
 
-pub struct UpdateUser {
+#[derive(Debug, Validate, Serialize, Deserialize)]
+pub struct UpdateUserReq {
+    #[validate(length(equal = 26, message = "provide a valid user id"))]
     pub id: String,
+
+    #[validate(email(message = "please provide a valid email address"))]
     pub email: Option<String>,
+
+    #[validate(length(
+        min = 3,
+        max = 100,
+        message = "name must be between 3 and 100 characters"
+    ))]
     pub name: Option<String>,
+
+    #[validate(custom(function = "validate_password"))]
     pub password: Option<String>,
 }
 
