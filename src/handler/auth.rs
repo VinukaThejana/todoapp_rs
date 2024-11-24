@@ -24,15 +24,7 @@ pub async fn register(
 ) -> Result<impl IntoResponse, AppError> {
     payload.validate()?;
 
-    let password = bcrypt::hash(payload.password, bcrypt::DEFAULT_COST).map_err(|err| {
-        AppError::Other(
-            anyhow::Error::new(err)
-                .context("Failed to hash the password")
-                .context(format!("Failed to create user: {}", payload.email)),
-        )
-    })?;
-
-    database::user::create(payload.email, payload.name, password, &state.db)
+    database::user::create(payload, &state.db)
         .await
         .map_err(AppError::from_db_error)?;
 
