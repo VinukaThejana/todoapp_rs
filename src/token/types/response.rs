@@ -9,6 +9,7 @@ pub enum TokenResponse {
         ajti: String,
     },
     Session(String),
+    Reauth(String),
 }
 
 impl Display for TokenResponse {
@@ -21,6 +22,7 @@ impl Display for TokenResponse {
                 ajti: _,
             } => write!(f, "{token}"),
             TokenResponse::Session(token) => write!(f, "{token}"),
+            TokenResponse::Reauth(token) => write!(f, "{token}"),
         }
     }
 }

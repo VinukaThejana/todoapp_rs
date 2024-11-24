@@ -103,6 +103,9 @@ where
                 TokenType::Session => {
                     unimplemented!("please implement the session token verification logic")
                 }
+                TokenType::ReAuth => {
+                    unimplemented!("please implement the re-auth token verification logic")
+                }
             }
 
             Ok(claims)

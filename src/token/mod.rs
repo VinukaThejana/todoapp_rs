@@ -12,6 +12,7 @@ pub enum TokenType {
     Access,
     Refresh,
     Session,
+    ReAuth,
 }
 
 impl Display for TokenType {
@@ -20,6 +21,7 @@ impl Display for TokenType {
             TokenType::Access => "access_token",
             TokenType::Refresh => "refresh_token",
             TokenType::Session => "session_token",
+            TokenType::ReAuth => "reauth_token",
         };
 
         write!(f, "{token}")
