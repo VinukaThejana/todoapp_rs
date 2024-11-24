@@ -1,9 +1,13 @@
+use crate::model::user::ReAuthUserReq;
 use crate::token::claims::Claims;
 use crate::token::cookies::{CookieManager, CookieParams};
-use crate::token::service::factory;
+use crate::token::service::{create_token, factory};
 use crate::token::traits::Token;
 use crate::token::types::access::Access;
+use crate::token::types::params::TokenParams;
+use crate::token::types::reauth::Reauth;
 use crate::token::types::refresh::Refresh;
+use crate::token::types::response::TokenResponse;
 use crate::token::{constants, TokenType};
 use crate::{
     config::{state::AppState, ENV},
@@ -14,6 +18,7 @@ use crate::{
 use anyhow::anyhow;
 use axum::http::header::SET_COOKIE;
 use axum::http::{HeaderMap, HeaderValue};
+use axum::Extension;
 use axum::{extract::State, response::IntoResponse, Json};
 use serde_json::json;
 use validator::Validate;
@@ -182,6 +187,50 @@ pub async fn logout(
 
     headers.append(SET_COOKIE, HeaderValue::from_str(&refresh_cookie).unwrap());
     headers.append(SET_COOKIE, HeaderValue::from_str(&session_cookie).unwrap());
+
+    Ok((
+        headers,
+        Json(json!({
+            "status": "ok"
+        })),
+    ))
+}
+
+pub async fn reauth(
+    State(state): State<AppState>,
+    Json(payload): Json<ReAuthUserReq>,
+    Extension(user_id): Extension<String>,
+) -> Result<impl IntoResponse, AppError> {
+    payload.validate()?;
+
+    let user = database::user::find_by_id(user_id, &state.db)
+        .await
+        .map_err(AppError::from_db_error)?
+        .ok_or_else(|| AppError::NotFound(anyhow!("User not found")))?;
+
+    if !bcrypt::verify(&payload.password, &user.password).map_err(|err| {
+        AppError::Other(anyhow::Error::new(err).context("Failed to verify the password"))
+    })? {
+        return Err(AppError::IncorrectCredentials(anyhow!(
+            "Incorrect password"
+        )));
+    }
+
+    let reauth_token = create_token(Reauth::new(state.clone(), user.id), TokenParams::default())
+        .await
+        .map(|token| {
+            let TokenResponse::Reauth(token) = token else {
+                unreachable!("Reauth token is expected");
+            };
+            token
+        })?;
+
+    let mut headers = HeaderMap::new();
+
+    headers.append(
+        "X-New-Reauth-Token",
+        HeaderValue::from_str(&reauth_token).unwrap(),
+    );
 
     Ok((
         headers,

@@ -21,6 +21,12 @@ pub struct UpdateUserReq {
     pub password: Option<String>,
 }
 
+#[derive(Debug, Validate, Serialize, Deserialize)]
+pub struct ReAuthUserReq {
+    #[validate(custom(function = "validate_password"))]
+    pub password: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserDetails {
     pub email: String,
