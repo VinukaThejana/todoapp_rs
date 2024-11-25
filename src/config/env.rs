@@ -103,6 +103,20 @@ pub struct Env {
     #[serde(deserialize_with = "deserialize_base64")]
     pub session_token_public_key: Arc<Vec<u8>>,
 
+    #[validate(length(
+        min = 1,
+        message = "reauth token private key is required and cannot be empty"
+    ))]
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub reauth_token_private_key: Arc<Vec<u8>>,
+
+    #[validate(length(
+        min = 1,
+        message = "reauth token public key is required and cannot be empty"
+    ))]
+    #[serde(deserialize_with = "deserialize_base64")]
+    pub reauth_token_public_key: Arc<Vec<u8>>,
+
     #[validate(range(
         min = 172_800,
         message = "refresh token expiration must be greater than 172,800 seconds (2 Days)"
@@ -120,6 +134,12 @@ pub struct Env {
         message = "session token expiration must be greater than 172,800 seconds (2 Days)"
     ))]
     pub session_token_expiration: usize,
+
+    #[validate(range(
+        min = 1,
+        message = "reauth token expiration must be greater than 1 second"
+    ))]
+    pub reauth_token_expiration: usize,
 
     #[validate(range(
         min = 8080,

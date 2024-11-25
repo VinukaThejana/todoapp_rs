@@ -41,15 +41,15 @@ impl Token<PrimaryClaims> for Reauth {
     }
 
     fn public_key(&self) -> &[u8] {
-        &ENV.access_token_public_key
+        &ENV.reauth_token_public_key
     }
 
     fn private_key(&self) -> &[u8] {
-        &ENV.access_token_private_key
+        &ENV.reauth_token_private_key
     }
 
     fn exp(&self) -> usize {
-        ENV.access_token_expiration
+        ENV.reauth_token_expiration
     }
 
     async fn create(&self, _: TokenParams) -> Result<TokenResponse, TokenError> {
