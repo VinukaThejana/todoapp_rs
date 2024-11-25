@@ -18,8 +18,7 @@ use crate::{
 use anyhow::anyhow;
 use axum::http::header::SET_COOKIE;
 use axum::http::{HeaderMap, HeaderValue};
-use axum::Extension;
-use axum::{extract::State, response::IntoResponse, Json};
+use axum::{extract::State, response::IntoResponse, Extension, Json};
 use serde_json::json;
 use validator::Validate;
 
@@ -198,8 +197,8 @@ pub async fn logout(
 
 pub async fn reauth(
     State(state): State<AppState>,
-    Json(payload): Json<ReAuthUserReq>,
     Extension(user_id): Extension<String>,
+    Json(payload): Json<ReAuthUserReq>,
 ) -> Result<impl IntoResponse, AppError> {
     payload.validate()?;
 

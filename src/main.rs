@@ -8,7 +8,7 @@ use std::time::Duration;
 use todoapp_rs::{
     config::{state::AppState, ENV},
     handler::{auth, user},
-    middleware::auth::auth_m,
+    middleware::auth::{auth_m, reauth_m},
 };
 use tokio::{net::TcpListener, signal};
 use tower::ServiceBuilder;
@@ -25,12 +25,21 @@ async fn main() -> anyhow::Result<()> {
                 .route("/register", post(auth::register))
                 .route("/login", post(auth::login))
                 .route("/refresh", patch(auth::refresh))
-                .route("/logout", delete(auth::logout)),
+                .route("/logout", delete(auth::logout))
+                .route(
+                    "/reauth",
+                    post(auth::reauth).layer(middleware::from_fn_with_state(state.clone(), auth_m)),
+                ),
         )
         .nest(
             "/user",
             Router::new()
                 .route("/profile", get(user::profile))
+                .route(
+                    "/update",
+                    patch(user::update)
+                        .layer(middleware::from_fn_with_state(state.clone(), reauth_m)),
+                )
                 .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
         )
         .layer(

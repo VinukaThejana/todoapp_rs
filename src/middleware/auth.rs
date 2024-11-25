@@ -1,7 +1,12 @@
 use crate::{
     config::state::AppState,
     error::AppError,
-    token::{claims::Claims, traits::Token, types::access::Access, TokenType},
+    token::{
+        claims::Claims,
+        traits::Token,
+        types::{access::Access, reauth::Reauth},
+        TokenType,
+    },
 };
 use anyhow::anyhow;
 use axum::{
@@ -36,5 +41,25 @@ pub async fn auth_m(
         .to_owned();
 
     req.extensions_mut().insert(user_id);
+    Ok(next.run(req).await)
+}
+
+pub async fn reauth_m(
+    State(state): State<AppState>,
+    req: Request,
+    next: Next,
+) -> Result<impl IntoResponse, AppError> {
+    let reauth_token = req
+        .headers()
+        .get("x-reauth-token")
+        .and_then(|reauth_header| reauth_header.to_str().ok())
+        .ok_or_else(|| AppError::Unauthorized(anyhow!("Missing x-reauth-token header")))?
+        .to_owned();
+
+    Reauth::default(state)
+        .verify(reauth_token, TokenType::ReAuth)
+        .await
+        .map_err(AppError::from_token_error)?;
+
     Ok(next.run(req).await)
 }
