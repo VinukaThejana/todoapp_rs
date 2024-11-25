@@ -40,6 +40,11 @@ async fn main() -> anyhow::Result<()> {
                     patch(user::update)
                         .layer(middleware::from_fn_with_state(state.clone(), reauth_m)),
                 )
+                .route(
+                    "/delete",
+                    delete(user::delete)
+                        .layer(middleware::from_fn_with_state(state.clone(), reauth_m)),
+                )
                 .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
         )
         .layer(
