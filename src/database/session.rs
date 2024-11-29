@@ -4,14 +4,14 @@ use crate::entity::{prelude::Session, session};
 use sea_orm::*;
 
 pub async fn create(
+    rjti: String,
     user_id: String,
-    token: String,
     expires: usize,
     db: &DatabaseConnection,
 ) -> Result<session::Model, DbErr> {
     Session::insert(session::ActiveModel {
+        id: Set(rjti),
         user_id: Set(user_id),
-        token: Set(token),
         expires: Set(SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -23,9 +23,9 @@ pub async fn create(
     .await
 }
 
-pub async fn delete(token: String, db: &DatabaseConnection) -> Result<(), DbErr> {
+pub async fn delete(rjti: String, db: &DatabaseConnection) -> Result<(), DbErr> {
     session::ActiveModel {
-        token: Set(token),
+        id: Set(rjti),
         ..Default::default()
     }
     .delete(db)

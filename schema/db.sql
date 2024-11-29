@@ -38,9 +38,8 @@ CREATE TABLE IF NOT EXISTS user_ (
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_user_email_" ON "user_" ("email");
 
 CREATE TABLE IF NOT EXISTS "session_" (
-    "id" VARCHAR(26) PRIMARY KEY DEFAULT gen_ulid(),
+    "id" VARCHAR(26) PRIMARY KEY,
     "user_id" VARCHAR(26) NOT NULL,
-    "token" VARCHAR(26) NOT NULL UNIQUE,
     "expires" BIGINT NOT NULL,
     "login_at" BIGINT NOT NULL DEFAULT get_epoch(),
     CONSTRAINT "fk_session_user_id_" FOREIGN KEY ("user_id") REFERENCES "user_" ("id") ON DELETE CASCADE

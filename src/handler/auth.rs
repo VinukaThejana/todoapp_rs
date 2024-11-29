@@ -70,7 +70,7 @@ pub async fn login(
                     anyhow::Error::new(err).context("Failed to delete expired sessions")
                 );
             });
-        let _ = database::session::create(user.id, rjti, ENV.refresh_token_expiration, &state.db)
+        let _ = database::session::create(rjti, user.id, ENV.refresh_token_expiration, &state.db)
             .await
             .map_err(|err| {
                 log::error!(

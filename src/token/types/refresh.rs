@@ -95,7 +95,7 @@ impl Refresh {
     pub async fn delete(&self, rjti: &str) -> Result<(), TokenError> {
         database::session::delete(rjti.to_string(), &self.state.db)
             .await
-            .map_err(|err| TokenError::Other(anyhow!(err.to_string())))?;
+            .map_err(|err| TokenError::Other(anyhow!(err)))?;
 
         let mut conn = self
             .state()
