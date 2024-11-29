@@ -1,6 +1,7 @@
 use super::{params::TokenParams, response::TokenResponse};
 use crate::{
     config::{state::AppState, ENV},
+    database,
     token::{
         claims::{Claims, PrimaryClaims},
         error::TokenError,
@@ -92,6 +93,10 @@ impl Token<PrimaryClaims> for Refresh {
 
 impl Refresh {
     pub async fn delete(&self, rjti: &str) -> Result<(), TokenError> {
+        database::session::delete(rjti.to_string(), &self.state.db)
+            .await
+            .map_err(|err| TokenError::Other(anyhow!(err.to_string())))?;
+
         let mut conn = self
             .state()
             .get_redis_conn()
