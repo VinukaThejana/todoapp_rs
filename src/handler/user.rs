@@ -1,7 +1,12 @@
 use crate::database;
 use crate::model::user::UpdateUserReq;
+use crate::token::cookies::CookieManager;
+use crate::token::traits::Token;
+use crate::token::types::refresh::Refresh;
+use crate::token::{constants, TokenType};
 use crate::{config::state::AppState, error::AppError};
 use anyhow::anyhow;
+use axum::http::HeaderMap;
 use axum::Json;
 use axum::{extract::State, response::IntoResponse, Extension};
 use serde_json::json;
@@ -45,7 +50,27 @@ pub async fn update(
 pub async fn delete(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
+    headers: HeaderMap,
 ) -> Result<impl IntoResponse, AppError> {
+    let refresh_token = Refresh::default(state.clone());
+
+    let jti = refresh_token
+        .verify(
+            CookieManager::get(&headers, constants::REFRESH_TOKEN_COOKIE_NAME)
+                .ok_or_else(|| AppError::Unauthorized(anyhow!("Refresh token not found")))?
+                .value()
+                .to_owned(),
+            TokenType::Refresh,
+        )
+        .await
+        .map_err(AppError::from_token_error)?
+        .jti;
+
+    refresh_token
+        .delete(&jti)
+        .await
+        .map_err(AppError::from_token_error)?;
+
     database::user::delete(user_id, &state.db)
         .await
         .map_err(AppError::from_db_error)?;
