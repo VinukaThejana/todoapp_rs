@@ -1,16 +1,23 @@
 use crate::{
-    entity::{prelude::Todo, todo},
-    model::todo::{PaginatedTodo, UpdateTodo},
+    entity::{
+        prelude::Todo,
+        todo::{self},
+    },
+    model::todo::{CreateTodoReq, PaginatedTodo, UpdateTodo},
     utils::paginate::Paginator,
 };
 use sea_orm::*;
 
-pub async fn create(data: todo::Model, db: &DatabaseConnection) -> Result<todo::Model, DbErr> {
+pub async fn create(
+    user_id: String,
+    data: CreateTodoReq,
+    db: &DatabaseConnection,
+) -> Result<todo::Model, DbErr> {
     Todo::insert(todo::ActiveModel {
         title: Set(data.title),
-        user_id: Set(data.user_id),
+        user_id: Set(user_id),
         content: Set(data.content),
-        completed: Set(data.completed),
+        completed: Set(false),
         ..Default::default()
     })
     .exec_with_returning(db)
@@ -37,8 +44,8 @@ pub async fn find_by_user_id(
     if todos.len().try_into().unwrap_or(0) == paginator.take + 1 {
         result.has_next = true;
         result.next_offset = Some(paginator.skip + paginator.take + 1);
+        todos.pop();
     }
-    todos.pop();
     result.todos = todos;
 
     Ok(result)
