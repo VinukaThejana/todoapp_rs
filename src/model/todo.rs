@@ -10,11 +10,25 @@ pub struct PaginatedTodo {
     pub has_next: bool,
 }
 
-pub struct UpdateTodo {
+#[derive(Debug, Validate, Serialize, Deserialize)]
+pub struct UpdateTodoReq {
+    #[validate(length(equal = 26, message = "provide a valid todo id"))]
     pub id: String,
-    pub user_id: String,
+
+    #[validate(length(
+        min = 3,
+        max = 50,
+        message = "title must be between 3 and 50 characters"
+    ))]
     pub title: Option<String>,
+
+    #[validate(length(
+        min = 3,
+        max = 255,
+        message = "content must be between 3 and 255 characters"
+    ))]
     pub content: Option<String>,
+
     pub completed: Option<bool>,
 }
 

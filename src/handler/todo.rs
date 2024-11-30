@@ -1,5 +1,8 @@
 use crate::{
-    config::state::AppState, database, error::AppError, model::todo::CreateTodoReq,
+    config::state::AppState,
+    database,
+    error::AppError,
+    model::todo::{CreateTodoReq, UpdateTodoReq},
     utils::paginate::Paginator,
 };
 use axum::{
@@ -46,4 +49,20 @@ pub async fn list(
         .map_err(AppError::from_db_error)?;
 
     Ok(Json(todos))
+}
+
+pub async fn update(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<String>,
+    Json(payload): Json<UpdateTodoReq>,
+) -> Result<impl IntoResponse, AppError> {
+    payload.validate()?;
+
+    database::todo::update(user_id, payload, &state.db)
+        .await
+        .map_err(AppError::from_db_error)?;
+
+    Ok(Json(json!({
+        "status": "ok"
+    })))
 }

@@ -7,7 +7,7 @@ use log::{error, info};
 use std::time::Duration;
 use todoapp_rs::{
     config::{state::AppState, ENV},
-    handler::{auth, user},
+    handler::{auth, todo, user},
     middleware::auth::{auth_m, reauth_m},
 };
 use tokio::{net::TcpListener, signal};
@@ -45,6 +45,14 @@ async fn main() -> anyhow::Result<()> {
                     delete(user::delete)
                         .layer(middleware::from_fn_with_state(state.clone(), reauth_m)),
                 )
+                .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
+        )
+        .nest(
+            "/todo",
+            Router::new()
+                .route("/create", post(todo::create))
+                .route("/list", get(todo::list))
+                .route("/update", patch(todo::update))
                 .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
         )
         .layer(

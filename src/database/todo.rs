@@ -3,7 +3,7 @@ use crate::{
         prelude::Todo,
         todo::{self},
     },
-    model::todo::{CreateTodoReq, PaginatedTodo, UpdateTodo},
+    model::todo::{CreateTodoReq, PaginatedTodo, UpdateTodoReq},
     utils::paginate::Paginator,
 };
 use sea_orm::*;
@@ -69,10 +69,14 @@ pub async fn mark_complete(
     Ok(())
 }
 
-pub async fn update(data: UpdateTodo, db: &DatabaseConnection) -> Result<todo::Model, DbErr> {
+pub async fn update(
+    user_id: String,
+    data: UpdateTodoReq,
+    db: &DatabaseConnection,
+) -> Result<todo::Model, DbErr> {
     let mut result = todo::ActiveModel {
         id: Set(data.id),
-        user_id: Set(data.user_id),
+        user_id: Set(user_id),
         ..Default::default()
     };
 
