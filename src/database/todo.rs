@@ -51,21 +51,30 @@ pub async fn find_by_user_id(
     Ok(result)
 }
 
-pub async fn mark_complete(
-    id: String,
-    user_id: String,
-    is_complete: bool,
-    db: &DatabaseConnection,
-) -> Result<(), DbErr> {
+#[derive(DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Todo")]
+struct TodoCompleted {
+    completed: bool,
+}
+
+pub async fn mark(id: String, user_id: String, db: &DatabaseConnection) -> Result<(), DbErr> {
+    let completed = Todo::find_by_id(id.clone())
+        .into_partial_model::<TodoCompleted>()
+        .one(db)
+        .await?
+        .ok_or(DbErr::RecordNotFound(String::from(
+            "Todo not found for the given id",
+        )))?
+        .completed;
+
     let result = todo::ActiveModel {
         id: Set(id),
         user_id: Set(user_id),
-        completed: Set(is_complete),
+        completed: Set(!completed),
         ..Default::default()
     };
 
     result.save(db).await?;
-
     Ok(())
 }
 

@@ -53,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
                 .route("/create", post(todo::create))
                 .route("/list", get(todo::list))
                 .route("/update", patch(todo::update))
+                .route("/mark", patch(todo::mark))
                 .layer(middleware::from_fn_with_state(state.clone(), auth_m)),
         )
         .layer(
