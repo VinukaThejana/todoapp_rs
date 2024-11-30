@@ -129,7 +129,7 @@ impl Access {
             .arg(if let Some(ref v) = value {
                 TokenType::Access.get_key(v)
             } else {
-                "no_key".to_string()
+                String::from("no_key")
             })
             .ignore()
             .cmd("SET")

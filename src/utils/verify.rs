@@ -6,13 +6,13 @@ use crate::config::env::EnvMode;
 pub fn database_url(database_url: &str) -> Result<(), ValidationError> {
     if database_url.is_empty() {
         return Err(ValidationError::new("database_url")
-            .with_message(Cow::Owned("Database url must be provided".to_string())));
+            .with_message(Cow::Owned(String::from("Database URL must be provided"))));
     }
     if !database_url.starts_with("postgresql://") {
         return Err(
-            ValidationError::new("database_url").with_message(Cow::Owned(
-                "Please provide a valid postgresql database url".to_string(),
-            )),
+            ValidationError::new("database_url").with_message(Cow::Owned(String::from(
+                "Please provide a valid database URL",
+            ))),
         );
     }
 
@@ -24,7 +24,7 @@ pub fn log_level(level: &str) -> Result<(), ValidationError> {
 
     if level.is_empty() {
         return Err(ValidationError::new("rust_log")
-            .with_message(Cow::Owned("Log level must be provided".to_string())));
+            .with_message(Cow::Owned(String::from("Log level must be provided"))));
     }
 
     if !levels.contains(&level.to_lowercase().as_str()) {
@@ -46,17 +46,20 @@ pub fn log_level(level: &str) -> Result<(), ValidationError> {
 pub fn redis_url(url: &str) -> Result<(), ValidationError> {
     if url.is_empty() {
         return Err(ValidationError::new("redis_url")
-            .with_message(Cow::Owned("Redis URL must be provided".to_string())));
+            .with_message(Cow::Owned(String::from("Redis URL must be provided"))));
     }
 
     if url.starts_with("redis://") {
-        return Err(ValidationError::new("redis_url")
-            .with_message(Cow::Owned("Redis URL should be TLS encrypted".to_string())));
+        return Err(
+            ValidationError::new("redis_url").with_message(Cow::Owned(String::from(
+                "Please provide a secure redis URL",
+            ))),
+        );
     }
 
     if !url.starts_with("rediss://") {
         return Err(ValidationError::new("redis_url")
-            .with_message(Cow::Owned("Please provide a valid redis URL".to_string())));
+            .with_message(Cow::Owned(String::from("Please provide a valid redis URL"))));
     }
 
     Ok(())
@@ -64,9 +67,11 @@ pub fn redis_url(url: &str) -> Result<(), ValidationError> {
 
 pub fn env_mode(mode: &str) -> Result<(), ValidationError> {
     if !EnvMode::is_valid(mode) {
-        return Err(ValidationError::new("env_mode").with_message(Cow::Owned(
-            "Please provide a valid environment (prd or dev)".to_string(),
-        )));
+        return Err(
+            ValidationError::new("env_mode").with_message(Cow::Owned(String::from(
+                "Please provide a valid environment mode",
+            ))),
+        );
     }
 
     Ok(())

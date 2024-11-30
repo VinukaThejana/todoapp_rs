@@ -174,7 +174,7 @@ impl Env {
                             err.message
                                 .as_ref()
                                 .map(|msg| msg.to_string())
-                                .unwrap_or_else(|| "invalid input".to_string())
+                                .unwrap_or_else(|| String::from("invalid input"))
                         })
                         .collect::<Vec<String>>()
                         .join(", ");

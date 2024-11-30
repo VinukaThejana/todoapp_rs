@@ -111,7 +111,7 @@ impl IntoResponse for AppError {
                         err.first()
                             .and_then(|e| e.message.as_ref())
                             .map(|msg| msg.to_string())
-                            .unwrap_or_else(|| "invalid  input".to_string())
+                            .unwrap_or_else(|| String::from("invalid input"))
                     })
                     .collect::<Vec<String>>()
                     .first()
