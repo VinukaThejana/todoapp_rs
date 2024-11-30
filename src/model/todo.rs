@@ -50,7 +50,7 @@ pub struct CreateTodoReq {
 }
 
 #[derive(Debug, Validate, Serialize, Deserialize)]
-pub struct MarkCompletedReq {
+pub struct TodoIDReq {
     #[validate(length(equal = 26, message = "provide a valid todo id"))]
     pub id: String,
 }

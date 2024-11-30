@@ -2,7 +2,7 @@ use crate::{
     config::state::AppState,
     database,
     error::AppError,
-    model::todo::{CreateTodoReq, MarkCompletedReq, UpdateTodoReq},
+    model::todo::{CreateTodoReq, TodoIDReq, UpdateTodoReq},
     utils::paginate::Paginator,
 };
 use axum::{
@@ -70,11 +70,27 @@ pub async fn update(
 pub async fn mark(
     State(state): State<AppState>,
     Extension(user_id): Extension<String>,
-    Json(payload): Json<MarkCompletedReq>,
+    Json(payload): Json<TodoIDReq>,
 ) -> Result<impl IntoResponse, AppError> {
     payload.validate()?;
 
     database::todo::mark(payload.id, user_id, &state.db)
+        .await
+        .map_err(AppError::from_db_error)?;
+
+    Ok(Json(json!({
+        "status": "ok"
+    })))
+}
+
+pub async fn delete(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<String>,
+    Json(payload): Json<TodoIDReq>,
+) -> Result<impl IntoResponse, AppError> {
+    payload.validate()?;
+
+    database::todo::delete(payload.id, user_id, &state.db)
         .await
         .map_err(AppError::from_db_error)?;
 
