@@ -3,41 +3,12 @@ use crate::utils::{
     verify,
 };
 use dotenvy::dotenv;
+use envmode;
 use envy;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::sync::Arc;
 use validator::Validate;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum EnvMode {
-    Prd,
-    Dev,
-}
-
-impl From<&Arc<str>> for EnvMode {
-    fn from(mode: &Arc<str>) -> Self {
-        match mode.as_ref() {
-            "prd" => Self::Prd,
-            "dev" => Self::Dev,
-            _ => unreachable!("Invalid environment mode"),
-        }
-    }
-}
-
-impl EnvMode {
-    pub fn is_prd(mode: &str) -> bool {
-        mode == "prd"
-    }
-    pub fn is_dev(mode: &str) -> bool {
-        mode == "dev"
-    }
-
-    pub fn is_valid(mode: &str) -> bool {
-        Self::is_prd(mode) || Self::is_dev(mode)
-    }
-}
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct Env {
@@ -57,7 +28,7 @@ pub struct Env {
     #[serde(deserialize_with = "deserialize_arc_str")]
     pub domain: Arc<str>,
 
-    #[validate(custom(function = "verify::env_mode"))]
+    #[validate(custom(function = "envmode::verify"))]
     #[serde(deserialize_with = "deserialize_arc_str")]
     pub env: Arc<str>,
 
